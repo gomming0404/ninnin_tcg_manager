@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#111827" />
+  <title>Ninnin TCG Manager</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">N</div>
+        <div>
+          <strong>Ninnin TCG</strong>
+          <span>Portfolio Manager</span>
+        </div>
+      </div>
+      <nav id="nav">
+        <button class="nav-btn active" data-view="dashboard">Dashboard</button>
+        <button class="nav-btn" data-view="collection">Collection</button>
+        <button class="nav-btn" data-view="transactions">Transactions</button>
+        <button class="nav-btn" data-view="grading">Grading</button>
+        <button class="nav-btn" data-view="backup">Backup</button>
+      </nav>
+      <div class="sidebar-foot">Local-first · IndexedDB</div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h1 id="page-title">Dashboard</h1>
+          <p id="page-subtitle">포켓몬·원피스 카드 자산과 취미비 회수 현황</p>
+        </div>
+        <button id="quick-add" class="primary">+ 카드 추가</button>
+      </header>
+
+      <section id="view-dashboard" class="view active">
+        <div class="metric-grid">
+          <article class="metric-card"><span>Portfolio Value</span><strong id="m-value">₩0</strong><small id="m-value-sub">현재 평가액</small></article>
+          <article class="metric-card"><span>Total Cost</span><strong id="m-cost">₩0</strong><small>총 매입원가</small></article>
+          <article class="metric-card"><span>Unrealized P/L</span><strong id="m-pl">₩0</strong><small id="m-roi">0.0%</small></article>
+          <article class="metric-card"><span>Realized Cashflow</span><strong id="m-cash">₩0</strong><small>거래 순현금흐름</small></article>
+        </div>
+        <div class="dashboard-grid">
+          <article class="panel">
+            <div class="panel-head"><h2>TCG 구성</h2></div>
+            <div id="tcg-breakdown" class="breakdown"></div>
+          </article>
+          <article class="panel">
+            <div class="panel-head"><h2>보유 목적</h2></div>
+            <div id="purpose-breakdown" class="breakdown"></div>
+          </article>
+        </div>
+        <article class="panel">
+          <div class="panel-head"><h2>최근 카드</h2><button class="ghost" data-go="collection">전체 보기</button></div>
+          <div id="recent-cards" class="card-grid"></div>
+        </article>
+      </section>
+
+      <section id="view-collection" class="view">
+        <div class="toolbar">
+          <input id="card-search" type="search" placeholder="카드명 / 카드번호 검색" />
+          <select id="filter-tcg"><option value="">전체 TCG</option><option>Pokemon</option><option>One Piece</option><option>Other</option></select>
+          <select id="filter-purpose"><option value="">전체 목적</option><option>PC</option><option>Core Hold</option><option>Trade</option><option>Grading</option></select>
+          <button id="add-card" class="primary">+ 카드 추가</button>
+        </div>
+        <div id="collection-list" class="card-grid"></div>
+      </section>
+
+      <section id="view-transactions" class="view">
+        <div class="toolbar"><div></div><button id="add-transaction" class="primary">+ 거래 추가</button></div>
+        <div class="table-wrap"><table><thead><tr><th>날짜</th><th>카드</th><th>구분</th><th>거래금액</th><th>비용</th><th>순현금흐름</th><th></th></tr></thead><tbody id="transactions-body"></tbody></table></div>
+      </section>
+
+      <section id="view-grading" class="view">
+        <div class="toolbar"><div></div><button id="add-grading" class="primary">+ 그레이딩 추가</button></div>
+        <div class="table-wrap"><table><thead><tr><th>카드</th><th>업체</th><th>제출일</th><th>예상</th><th>실제</th><th>총원가</th><th>등급시세</th><th>ROI</th><th>상태</th><th></th></tr></thead><tbody id="grading-body"></tbody></table></div>
+      </section>
+
+      <section id="view-backup" class="view">
+        <article class="panel backup-panel">
+          <h2>데이터 백업</h2>
+          <p>모든 카드·거래·그레이딩 데이터를 JSON 파일로 저장합니다. 브라우저 데이터가 지워질 수 있으므로 정기 백업을 권장합니다.</p>
+          <div class="backup-actions">
+            <button id="export-json" class="primary">JSON 백업 다운로드</button>
+            <label class="file-btn">JSON 백업 복원<input id="import-json" type="file" accept="application/json" hidden /></label>
+          </div>
+          <hr />
+          <h3>전체 초기화</h3>
+          <p class="danger-text">현재 브라우저에 저장된 데이터를 모두 삭제합니다.</p>
+          <button id="reset-data" class="danger">전체 데이터 삭제</button>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="modal">
+    <form id="modal-form" method="dialog">
+      <div class="modal-head"><h2 id="modal-title"></h2><button type="button" id="modal-close" class="icon-btn">×</button></div>
+      <div id="modal-fields" class="form-grid"></div>
+      <div class="modal-actions"><button type="button" id="modal-cancel" class="ghost">취소</button><button type="submit" class="primary">저장</button></div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
