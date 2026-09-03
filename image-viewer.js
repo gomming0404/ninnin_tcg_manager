@@ -16,9 +16,11 @@
     const style = document.createElement('style');
     style.id = 'image-viewer-style';
     style.textContent = `
-      .tcg-image-viewer{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.96);display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
-      .tcg-image-viewer img{max-width:96vw;max-height:94vh;object-fit:contain;transform-origin:center center;will-change:transform;touch-action:none;-webkit-user-drag:none}
-      .tcg-image-viewer .viewer-hint{position:absolute;left:50%;bottom:max(18px,env(safe-area-inset-bottom));transform:translateX(-50%);padding:7px 11px;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-size:12px;white-space:nowrap;pointer-events:none;transition:opacity .3s}
+      dialog.tcg-image-viewer{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;border:0;background:rgba(0,0,0,.96);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+      dialog.tcg-image-viewer::backdrop{background:rgba(0,0,0,.96)}
+      .tcg-image-viewer .viewer-stage{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none}
+      .tcg-image-viewer img{max-width:96vw;max-height:94dvh;object-fit:contain;transform-origin:center center;will-change:transform;touch-action:none;-webkit-user-drag:none}
+      .tcg-image-viewer .viewer-hint{position:absolute;z-index:2;left:50%;bottom:max(18px,env(safe-area-inset-bottom));transform:translateX(-50%);padding:7px 11px;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-size:12px;white-space:nowrap;pointer-events:none;transition:opacity .3s}
       .tcg-image-viewer.zoomed .viewer-hint{opacity:0}
     `;
     document.head.appendChild(style);
@@ -33,7 +35,10 @@
   }
 
   function closeViewer() {
-    overlay?.remove();
+    if (overlay) {
+      try { if (overlay.open) overlay.close(); } catch (_) {}
+      overlay.remove();
+    }
     overlay = null;
     img = null;
     pointers.clear();
@@ -48,17 +53,24 @@
     if (!src) return;
     closeViewer();
     ensureStyles();
-    overlay = document.createElement('div');
+
+    // A modal <dialog> is used intentionally. The card detail itself is also a
+    // modal dialog, and ordinary fixed/z-index elements render below the top layer.
+    // Calling showModal() here places the image viewer above the detail dialog.
+    overlay = document.createElement('dialog');
     overlay.className = 'tcg-image-viewer';
-    overlay.innerHTML = `<img src="${src}" alt="${alt}"><div class="viewer-hint">한 번 더 누르면 닫기 · 두 손가락으로 확대</div>`;
+    overlay.innerHTML = `<div class="viewer-stage"><img src="${src}" alt="${alt}"></div><div class="viewer-hint">한 번 더 누르면 닫기 · 두 손가락으로 확대</div>`;
     document.body.appendChild(overlay);
+    overlay.showModal();
+
+    const stage = overlay.querySelector('.viewer-stage');
     img = overlay.querySelector('img');
     scale = 1; x = 0; y = 0; moved = false;
     applyTransform();
 
-    overlay.addEventListener('pointerdown', e => {
+    stage.addEventListener('pointerdown', e => {
       e.preventDefault();
-      overlay.setPointerCapture?.(e.pointerId);
+      stage.setPointerCapture?.(e.pointerId);
       pointers.set(e.pointerId, e);
       moved = false;
       if (pointers.size === 1) {
@@ -71,7 +83,7 @@
       }
     });
 
-    overlay.addEventListener('pointermove', e => {
+    stage.addEventListener('pointermove', e => {
       if (!pointers.has(e.pointerId)) return;
       const prev = pointers.get(e.pointerId);
       if (Math.hypot(e.clientX - prev.clientX, e.clientY - prev.clientY) > 2) moved = true;
@@ -96,19 +108,24 @@
         startY = p.clientY - y;
       }
     };
-    overlay.addEventListener('pointerup', finishPointer);
-    overlay.addEventListener('pointercancel', finishPointer);
+    stage.addEventListener('pointerup', finishPointer);
+    stage.addEventListener('pointercancel', finishPointer);
 
-    overlay.addEventListener('click', e => {
+    stage.addEventListener('click', () => {
       if (moved) { moved = false; return; }
       closeViewer();
     });
 
-    overlay.addEventListener('wheel', e => {
+    stage.addEventListener('wheel', e => {
       e.preventDefault();
       scale *= e.deltaY < 0 ? 1.15 : 0.87;
       applyTransform();
     }, { passive: false });
+
+    overlay.addEventListener('cancel', e => {
+      e.preventDefault();
+      closeViewer();
+    });
   }
 
   document.addEventListener('click', e => {
